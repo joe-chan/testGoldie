@@ -1,0 +1,177 @@
+/* tab begin */
+.yui-skin-sam .yui-navset .yui-content {
+    min-height: 300px;
+}
+.yui-skin-sam .yui-navset .yui-content, .yui-skin-sam .yui-navset .yui-navset-top .yui-content {
+    padding: 8px;
+}
+.yui-skin-sam .yui-navset .yui-nav a,
+.yui-skin-sam .yui-navset .yui-navset-top .yui-nav a {
+    color: #104573;
+}
+.yui-skin-sam .yui-navset .yui-nav a em,
+.yui-skin-sam .yui-navset .yui-navset-top .yui-nav a em {
+    border-color: #ADC1D3
+}
+.yui-skin-sam .yui-navset .yui-nav a,
+.yui-skin-sam .yui-navset .yui-navset-top .yui-nav a {
+    border-color: #ADC1D3
+}
+
+.yui-skin-sam .yui-navset .yui-nav a,
+.yui-skin-sam .yui-navset .yui-navset-top .yui-nav a {
+    background:url(../images/tab_header.gif) repeat-x ;
+    opacity: 0.75;
+}
+.yui-skin-sam .yui-navset .yui-nav a:hover,
+.yui-skin-sam .yui-navset .yui-navset-top .yui-nav a:hover {
+    opacity: 0.7;
+    background:url(../images/tab_header_mouseover.gif) repeat-x ;
+}
+.yui-skin-sam .yui-navset .yui-nav .selected a,
+.yui-skin-sam .yui-navset .yui-nav .selected a em {
+  border-color:#4AB73F;
+}
+.yui-skin-sam .yui-navset .yui-nav,
+.yui-skin-sam .yui-navset .yui-navset-top .yui-nav {
+    border: none
+}
+.yui-skin-sam .yui-navset .yui-content {
+    background: none;
+    border-color:#BEBEBE;
+}
+.yui-navset .yui-nav .selected a,
+.yui-skin-sam .yui-navset .yui-nav .selected a,
+.yui-navset .yui-nav .selected a:focus,
+.yui-skin-sam .yui-navset .yui-nav .selected a:hover {
+    background: url(../images/tab_header_selected.gif) repeat-x ;
+}
+
+.yui-skin-sam .yui-navset .yui-nav .selected a,
+.yui-skin-sam .yui-navset .yui-nav .selected a:focus,
+.yui-skin-sam .yui-navset .yui-nav .selected a:hover {
+    opacity: 1;
+    background: url(../images/tab_header_selected.gif) repeat-x ;
+}
+
+
+/* tab end   */
+
+/* YUI Datatable Overrides ********************/
+
+
+.yui-skin-sam .yui-pg-container {
+    margin: 0;
+}
+.yui-skin-sam .yui-pg-rpp-options {
+    margin: 0;
+}
+.yui-pg-page {
+    margin: 0 3px;
+}
+
+.yui-skin-sam .yui-dt th, .yui-skin-sam .yui-dt th a, .yui-skin-sam .yui-dt th, .yui-skin-sam .yui-dt th span {
+    color: #FFFFFF
+}
+
+.yui-skin-sam .yui-dt th, .yui-skin-sam .yui-dt th a:hover {
+    color: #CDD6E0;
+}
+
+.yui-dt-checkbox { width: auto }
+
+.yui-skin-sam .yui-dt {
+    -moz-border-radius-bottomleft:6px;
+    -moz-border-radius-bottomright:6px;
+    -moz-border-radius-topleft:6px;
+    -moz-border-radius-topright:6px;
+    border: none;
+    background-color: #FFFFFF;
+}
+
+.yui-skin-sam .yui-dt table {
+    border:1px solid #ced6db;
+    -moz-border-radius-bottomleft:4px;
+    -webkit-border-bottom-left-radius:4px;
+    -moz-border-radius-bottomright:4px;
+    -webkit-border-bottom-right-radius:4px;
+    -moz-border-radius-topleft:4px;
+    -webkit-border-top-left-radius:4px;
+    -moz-border-radius-topright:4px;
+    -webkit-border-top-right-radius:4px
+}
+
+.yui-skin-sam .yui-dt tr.yui-dt-first td {
+    border-top: none;
+    -moz-border-radius-topleft:4px;
+    -webkit-border-top-left-radius:4px
+}
+
+.yui-skin-sam .yui-dt th .yui-dt-liner {
+    text-align: left
+}
+
+.yui-skin-sam th.yui-dt-last  {
+    /*
+    -moz-border-radius-topright:4px;
+    -webkit-border-top-right-radius:4px;
+    */
+    border-right:0 none;
+    border-style: none none none none;
+    border-width: medium medium medium medium;    
+}
+
+.yui-skin-sam .yui-dt .yui-dt-last td {
+    -moz-border-radius-bottomleft:4px;
+    -webkit-border-bottom-left-radius:4px;
+    -moz-border-radius-bottomright:4px;
+    -webkit-border-bottom-right-radius:4px;
+}
+
+.yui-skin-sam .yui-dialog h2 { color: #294558 }
+
+.yui-skin-sam .yui-calcontainer {
+  font-size: 12px;
+  width: 14em
+}
+
+.yui-skin-sam .yui-dt th {
+  background:transparent url(/assets/light-blue-table-header.gif) repeat-x scroll left top;
+  font-size:12px;
+  border: none
+}
+
+.yui-skin-sam .yui-dt td {
+  font-size:12px;
+  border: none;
+}
+
+.yui-skin-sam tr.yui-dt-even {
+    background-color: #F7F7F7;
+}
+
+.yui-dt-col-event_date { font-weight: bold}
+
+#raiser_table table,
+#fixer_table table,
+#file_table table,
+#invitee_table table,
+#open_problem_table table,
+#linked_file_table table,
+#unlinked_file_table table {
+  border: none;
+}
+
+.yui-skin-sam .yui-dt table {
+  border:1px solid #CED6DB;
+}
+
+.yui-skin-sam .yui-calcontainer {
+  border: none;
+}
+
+.datatable-right-align {
+  text-align: right;
+}
+
+.yui-skin-sam .yui-ac-content li.yui-ac-highlight div {color: #FFFFFF}

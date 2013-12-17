@@ -1,0 +1,416 @@
+<link rel="stylesheet" type="text/css" href="/apps/yui-290/build/menu/assets/skins/sam/menu.css"> 
+<link rel="stylesheet" type="text/css" href="/apps/css/topnav.css">         
+
+<script type="text/javascript" src="/apps/yui-290/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/animation/animation.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/container/container_core.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/menu/menu.js"></script>
+
+<script type="text/javascript">
+
+    /*
+         Initialize and render the MenuBar when its elements are ready 
+         to be scripted.
+    */
+
+    YAHOO.util.Event.onContentReady("techlive_topnav", function () {
+
+        /*
+                                Instantiate a MenuBar:  The first argument passed to the constructor
+                                is the id for the Menu element to be created, the second is an 
+                                object literal of configuration properties.
+        */
+
+        var oMenuBar = new YAHOO.widget.MenuBar("techlive_topnav", { 
+                                                    autosubmenudisplay: true, 
+                                                    hidedelay: 750, 
+                                                    lazyload: true });
+
+        /*
+             Define an array of object literals, each containing 
+             the data necessary to create a submenu.
+        */
+
+        var aSubmenuData = [ null, null, null,
+            {
+                id: "help", 
+                itemdata: [
+                    { text: "Tutorial", id: "nav_tutorial", target: "_blank", url: "<%= url_for :controller => 'help', :action => 'tutorial' %>" },
+                    /* Take out Wiki. No longer used.
+                     *  { text: "Wiki", id: "nav_wiki", target: "_blank", url: "<%= request.domain.nil? ? "#{request.protocol}#{request.host}:#{$techlive_settings['PORT_WIKI']}/Plone" : "#{request.protocol}wiki.#{request.domain}" %>" },
+                     */
+                    { text: "TechLive User Guide (PDF)", id: "nav_ug_pdf", target: "_blank", url: "/apps/doc/techlive_ug.pdf" },
+                    { text: "TechLive User Guide (HTML)", id: "nav_ug_html", target: "_blank", url: "/apps/doc/techlive_ug.htm" },
+                    { text: "MustCollect User Guide (PDF)", id: "nav_mc_ug_pdf", target: "_blank", url: "/apps/doc/mustcollect_ug.pdf" },
+                    { text: "Must Collect User Guide (HTML)", id: "nav_mc_ug_html", target: "_blank", url: "/apps/doc/mustcollect_ug.htm" }
+                ] 
+            },
+            {
+                id: "report",
+                itemdata: [
+	            { 
+	                text: "Application Tier",  
+                        id: "nav_apps_tier",
+	                submenu: {  
+	                            id: "tc_web",  
+	                            itemdata: [ 
+	                                { text: "tc_web01", id: "nav_tc_web01", url: "/rubyrun/tc_web01" }, 
+	                                { text: "tc_web02", id: "nav_tc_web02", url: "/rubyrun/tc_web02" }, 
+	                                { text: "tc_web03", id: "nav_tc_web03", url: "/rubyrun/tc_web03" }, 
+	                                { text: "tc_web04", id: "nav_tc_web04", url: "/rubyrun/tc_web04" }, 
+	                                { text: "tc_web05", id: "nav_tc_web05", url: "/rubyrun/tc_web05" }, 
+	                                { text: "tc_web06", id: "nav_tc_web06", url: "/rubyrun/tc_web06" }, 
+	                                { text: "tc_web07", id: "nav_tc_web07", url: "/rubyrun/tc_web07" }, 
+	                                { text: "tc_web08", id: "nav_tc_web08", url: "/rubyrun/tc_web08" }                                         
+	                            ]  
+	                        } 
+	             
+	            },  
+	            { 
+	                text: "Search Servers",  
+                        id: "nav_search_servers",
+	                submenu: {  
+	                            id: "ss",  
+	                            itemdata: [ 
+	                                { text: "tc_ss01", id: "nav_tc_ss01", url: "/rubyrun/tc_ss01" }, 
+	                                { text: "tc_ss02", id: "nav_tc_ss02", url: "/rubyrun/tc_ss02" }, 
+	                                { text: "tc_ss03", id: "nav_tc_ss03", url: "/rubyrun/tc_ss03" }, 
+	                                { text: "tc_ss04", id: "nav_tc_ss04", url: "/rubyrun/tc_ss04" },
+	                                { text: "tc_ss05", id: "nav_tc_ss05", url: "/rubyrun/tc_ss05" }, 
+	                                { text: "tc_ss06", id: "nav_tc_ss06", url: "/rubyrun/tc_ss06" }, 
+	                                { text: "tc_ss07", id: "nav_tc_ss07", url: "/rubyrun/tc_ss07" }, 
+	                                { text: "tc_ss08", id: "nav_tc_ss08", url: "/rubyrun/tc_ss08" }                                         
+	                            ]  
+	                        } 
+	             
+	            }                    
+              ]
+            }                    
+        ];
+
+
+        var ua = YAHOO.env.ua,
+            oAnim;  // Animation instance
+
+
+        /*
+             "beforeshow" event handler for each submenu of the MenuBar
+             instance, used to setup certain style properties before
+             the menu is animated.
+        */
+
+        function onSubmenuBeforeShow(p_sType, p_sArgs) {
+
+            var oBody,
+                oElement,
+                oShadow,
+                oUL;
+
+
+            if (this.parent) {
+
+                oElement = this.element;
+
+                /*
+                     Get a reference to the Menu's shadow element and 
+                     set its "height" property to "0px" to syncronize 
+                     it with the height of the Menu instance.
+                */
+
+                oShadow = oElement.lastChild;
+                oShadow.style.height = "0px";
+
+
+                /*
+                    Stop the Animation instance if it is currently 
+                    animating a Menu.
+                */ 
+
+                if (oAnim && oAnim.isAnimated()) {
+
+                    oAnim.stop();
+                    oAnim = null;
+
+                }
+
+
+                /*
+                    Set the body element's "overflow" property to 
+                    "hidden" to clip the display of its negatively 
+                    positioned <ul> element.
+                */ 
+
+                oBody = this.body;
+
+
+                //  Check if the menu is a submenu of a submenu.
+
+                if (this.parent && 
+                    !(this.parent instanceof YAHOO.widget.MenuBarItem)) {
+
+
+                    /*
+                        There is a bug in gecko-based browsers and Opera where 
+                        an element whose "position" property is set to 
+                        "absolute" and "overflow" property is set to 
+                        "hidden" will not render at the correct width when
+                        its offsetParent's "position" property is also 
+                        set to "absolute."  It is possible to work around 
+                        this bug by specifying a value for the width 
+                        property in addition to overflow.
+                    */
+
+                    if (ua.gecko || ua.opera) {
+
+                        oBody.style.width = oBody.clientWidth + "px";
+
+                    }
+
+
+                    /*
+                        Set a width on the submenu to prevent its 
+                        width from growing when the animation 
+                        is complete.
+                    */
+
+                    if (ua.ie == 7) {
+
+                        oElement.style.width = oElement.clientWidth + "px";
+
+                    }
+
+                }
+
+
+                oBody.style.overflow = "hidden";
+
+
+                /*
+                    Set the <ul> element's "marginTop" property 
+                    to a negative value so that the Menu's height
+                    collapses.
+                */ 
+
+                oUL = oBody.getElementsByTagName("ul")[0];
+
+                oUL.style.marginTop = ("-" + oUL.offsetHeight + "px");
+
+            }
+
+        }
+
+
+        /*
+            "tween" event handler for the Anim instance, used to 
+            syncronize the size and position of the Menu instance's 
+            shadow and iframe shim (if it exists) with its 
+            changing height.
+        */
+
+        function onTween(p_sType, p_aArgs, p_oShadow) {
+
+            if (this.cfg.getProperty("iframe")) {
+
+                this.syncIframe();
+
+            }
+
+            if (p_oShadow) {
+
+                p_oShadow.style.height = this.element.offsetHeight + "px";
+
+            }
+
+        }
+
+
+        /*
+            "complete" event handler for the Anim instance, used to 
+            remove style properties that were animated so that the 
+            Menu instance can be displayed at its final height.
+        */
+
+        function onAnimationComplete(p_sType, p_aArgs, p_oShadow) {
+
+            var oBody = this.body,
+                oUL = oBody.getElementsByTagName("ul")[0];
+
+            if (p_oShadow) {
+
+                p_oShadow.style.height = this.element.offsetHeight + "px";
+
+            }
+
+
+            oUL.style.marginTop = "";
+            oBody.style.overflow = "";
+
+
+            //  Check if the menu is a submenu of a submenu.
+
+            if (this.parent && 
+                !(this.parent instanceof YAHOO.widget.MenuBarItem)) {
+
+
+                // Clear widths set by the "beforeshow" event handler
+
+                if (ua.gecko || ua.opera) {
+
+                    oBody.style.width = "";
+
+                }
+
+                if (ua.ie == 7) {
+
+                    this.element.style.width = "";
+
+                }
+
+            }
+
+        }
+
+
+        /*
+             "show" event handler for each submenu of the MenuBar 
+             instance - used to kick off the animation of the 
+             <ul> element.
+        */
+
+        function onSubmenuShow(p_sType, p_sArgs) {
+
+            var oElement,
+                oShadow,
+                oUL;
+
+            if (this.parent) {
+
+                oElement = this.element;
+                oShadow = oElement.lastChild;
+                oUL = this.body.getElementsByTagName("ul")[0];
+
+
+                /*
+                     Animate the <ul> element's "marginTop" style 
+                     property to a value of 0.
+                */
+
+                oAnim = new YAHOO.util.Anim(oUL, 
+                    { marginTop: { to: 0 } },
+                    .5, YAHOO.util.Easing.easeOut);
+
+
+                oAnim.onStart.subscribe(function () {
+
+                    oShadow.style.height = "100%";
+
+                });
+
+
+                oAnim.animate();
+
+
+                /*
+                    Subscribe to the Anim instance's "tween" event for 
+                    IE to syncronize the size and position of a 
+                    submenu's shadow and iframe shim (if it exists)  
+                    with its changing height.
+                */
+
+                if (YAHOO.env.ua.ie) {
+
+                    oShadow.style.height = oElement.offsetHeight + "px";
+
+
+                    /*
+                        Subscribe to the Anim instance's "tween"
+                        event, passing a reference Menu's shadow 
+                        element and making the scope of the event 
+                        listener the Menu instance.
+                    */
+
+                    oAnim.onTween.subscribe(onTween, oShadow, this);
+
+                }
+
+
+                /*
+                    Subscribe to the Anim instance's "complete" event,
+                    passing a reference Menu's shadow element and making 
+                    the scope of the event listener the Menu instance.
+                */
+
+                oAnim.onComplete.subscribe(onAnimationComplete, oShadow, this);
+
+            }
+
+        }
+
+
+        /*
+             Subscribe to the "beforerender" event, adding a submenu 
+             to each of the items in the MenuBar instance.
+        */
+
+        oMenuBar.subscribe("beforeRender", function () {
+
+                                var nSubmenus = aSubmenuData.length,
+                                        i;
+
+
+            if (this.getRoot() == this) {
+
+                                        for (i = 0; i < nSubmenus; i++) {
+                        this.getItem(i).cfg.setProperty("submenu", aSubmenuData[i]);
+                                        }
+
+            }
+
+        });
+
+
+        /*
+             Subscribe to the "beforeShow" and "show" events for 
+             each submenu of the MenuBar instance.
+        */
+
+        oMenuBar.subscribe("beforeShow", onSubmenuBeforeShow);
+        oMenuBar.subscribe("show", onSubmenuShow);
+
+
+        /*
+             Call the "render" method with no arguments since the 
+             markup for this MenuBar instance is already exists in 
+             the page.
+        */
+
+        oMenuBar.render();         
+
+    });
+
+</script>
+<div id="nav">
+  <div class="wrap">
+    <div id="techlive_topnav" class="yuimenubar yuimenubarnav">
+        <div class="bd">
+            <ul class="first-of-type">
+                <li class="yuimenubaritem first-of-type">
+                    <a id="nav_dashboard" class="yuimenubaritemlabel" href="<%= url_for :controller => 'my_techlive', :action => 'summary' %>">Dashboard</a>
+                </li>
+                <li class="yuimenubaritem">
+                    <a id="nav_profile" class="yuimenubaritemlabel" href="<%= account_path(current_account_id) %>">My Profile</a>
+                </li>
+                <li class="yuimenubaritem">
+                    <a id="nav_profile" class="yuimenubaritemlabel" href="<%= url_for :controller => 'ec2_collector', :action => 'new'  %>">Amazon EC2</a>
+                </li>
+                <li class="yuimenubaritem">
+                    <a id="nav_help"class="yuimenubaritemlabel" href="">Help</a>
+                </li>
+                <li class="yuimenubaritem">
+                    <a id="nav_report" class="yuimenubaritemlabel" href="">Report</a>
+                </li>
+            </ul>
+        </div>
+    </div>    
+  </div>
+</div>

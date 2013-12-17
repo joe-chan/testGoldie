@@ -1,0 +1,28 @@
+<% if flash[:notice] %>
+  <div id="flash-message">
+    <div><em><%= flash[:notice] %></em></div>
+  </div>
+<% end %>
+<% if flash[:error] %>
+  <div id="error-message">
+    <div id="error-message-header"><em><%= flash[:error] %></em></div>
+  </div>
+<% end %>
+<% if defined?(error_messages) && !error_messages.nil? && error_messages.kind_of?(String) && error_messages.length > 0 %>
+  <div id="error-message">
+    <div id="error-message-header"><em>The following error has occurred when processing your request:</em></div>
+    <%= error_messages %>
+  </div>
+<% end %>
+<% if defined?(error_messages) && !error_messages.nil? && error_messages.kind_of?(ActiveRecord::Errors) && error_messages.length > 0 %>
+  <div id="error-message">
+    <div id="error-message-header"><em>The following error has occurred when processing your request:</em></div>    
+    <div id="errorExplanation" class="errorExplanation">
+      <ul>
+        <% error_messages.each { |attr, msg| %>
+        <li><%= msg %></li>
+        <% } %>
+      </ul>
+    </div>    
+  </div>
+<% end %>

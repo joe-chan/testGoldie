@@ -1,0 +1,283 @@
+<!-- css -->
+<link rel="stylesheet" type="text/css" href="/assets/yui-290/build/assets/skins/sam/skin.css"></link>
+<link rel="stylesheet" type="text/css" href="/assets/yui-290/build/datatable/assets/skins/sam/datatable.css"></link>
+<link rel="stylesheet" type="text/css" href="/assets/yui-290/build/paginator/assets/skins/sam/paginator.css"></link>
+<link rel="stylesheet" type="text/css" href="/assets/zuora_yui_override.css"></link>
+<!-- YUI js -->
+<script type="text/javascript" src="/assets/yui-290/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/element/element-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/datasource/datasource-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/datatable/datatable-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/container/container-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/paginator/paginator-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/connection/connection-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/json/json-min.js"></script>
+
+<script type="text/javascript">
+ 
+//
+// FUNCTION
+//
+function toggle_visibility(id) {
+  var e = document.getElementById(id);
+  if(e.style.display == 'block')
+    e.style.display = 'none';
+  else
+    e.style.display = 'block';
+}
+
+function init() {
+  var col_defs = [
+      {key:"key", width: 200, sortable:true, resizeable:true, label:"Attribute"},
+      {key:"value", width: 400, sortable:false, resizeable:true, label:"Value"}
+  ];
+
+  var ds = <%= @json_response.html_safe %>;
+
+  invoiceItem_object = new YAHOO.util.LocalDataSource(ds);
+  invoiceItem_object.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  invoiceItem_object.responseSchema = {
+    resultsList: "response.invoiceItem",
+    fields : [
+      { key: "key" },
+      { key: "value" }
+    ]
+  }
+
+  invoice_object = new YAHOO.util.LocalDataSource(ds);
+  invoice_object.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  invoice_object.responseSchema = {
+    resultsList: "response.invoice",
+    fields : [
+      { key: "key" },
+      { key: "value" }
+    ]
+  }
+
+  account_object = new YAHOO.util.LocalDataSource(ds);
+  account_object.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  account_object.responseSchema = {
+    resultsList: "response.account",
+    fields : [
+      { key: "key" },
+      { key: "value" }
+    ]
+  }
+
+  parentAccount_object = new YAHOO.util.LocalDataSource(ds);
+  parentAccount_object.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  parentAccount_object.responseSchema = {
+    resultsList: "response.parentAccount",
+    fields : [
+      { key: "key" },
+      { key: "value" }
+    ]
+  }
+
+  billTo_object = new YAHOO.util.LocalDataSource(ds);
+  billTo_object.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  billTo_object.responseSchema = {
+    resultsList: "response.billTo",
+    fields : [
+      { key: "key" },
+      { key: "value" }
+    ]
+  }
+
+  soldTo_object = new YAHOO.util.LocalDataSource(ds);
+  soldTo_object.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  soldTo_object.responseSchema = {
+    resultsList: "response.soldTo",
+    fields : [
+      { key: "key" },
+      { key: "value" }
+    ]
+  }
+
+  defaultPaymentMethod_object = new YAHOO.util.LocalDataSource(ds);
+  defaultPaymentMethod_object.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  defaultPaymentMethod_object.responseSchema = {
+    resultsList: "response.defaultPaymentMethod",
+    fields : [
+      { key: "key" },
+      { key: "value" }
+    ]
+  }
+
+  ratePlanCharge_object = new YAHOO.util.LocalDataSource(ds);
+  ratePlanCharge_object.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  ratePlanCharge_object.responseSchema = {
+    resultsList: "response.ratePlanCharge",
+    fields : [
+      { key: "key" },
+      { key: "value" }
+    ]
+  }
+
+  ratePlan_object = new YAHOO.util.LocalDataSource(ds);
+  ratePlan_object.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  ratePlan_object.responseSchema = {
+    resultsList: "response.ratePlan",
+    fields : [
+      { key: "key" },
+      { key: "value" }
+    ]
+  }
+
+  subscription_object = new YAHOO.util.LocalDataSource(ds);
+  subscription_object.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  subscription_object.responseSchema = {
+    resultsList: "response.subscription",
+    fields : [
+      { key: "key" },
+      { key: "value" }
+    ]
+  }
+
+  amendment_object = new YAHOO.util.LocalDataSource(ds);
+  amendment_object.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  amendment_object.responseSchema = {
+    resultsList: "response.amendment",
+    fields : [
+      { key: "key" },
+      { key: "value" }
+    ]
+  }
+
+  productRatePlanCharge_object = new YAHOO.util.LocalDataSource(ds);
+  productRatePlanCharge_object.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  productRatePlanCharge_object.responseSchema = {
+    resultsList: "response.productRatePlanCharge",
+    fields : [
+      { key: "key" },
+      { key: "value" }
+    ]
+  }
+
+  productRatePlan_object = new YAHOO.util.LocalDataSource(ds);
+  productRatePlan_object.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  productRatePlan_object.responseSchema = {
+    resultsList: "response.productRatePlan",
+    fields : [
+      { key: "key" },
+      { key: "value" }
+    ]
+  }
+
+  product_object = new YAHOO.util.LocalDataSource(ds);
+  product_object.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  product_object.responseSchema = {
+    resultsList: "response.product",
+    fields : [
+      { key: "key" },
+      { key: "value" }
+    ]
+  }
+
+  var config = {
+    dynamicData: false,
+    MSG_EMPTY: "No Attribute/Value paris Found."
+  }
+  
+  invoiceItem_table = new YAHOO.widget.DataTable("invoiceItem_table",
+                                              col_defs,
+                                              invoiceItem_object,
+                                              config);
+  invoice_table = new YAHOO.widget.DataTable("invoice_table",
+                                              col_defs,
+                                              invoice_object,
+                                              config);
+  account_table = new YAHOO.widget.DataTable("account_table",
+                                              col_defs,
+                                              account_object,
+                                              config);
+  parentAccount_table = new YAHOO.widget.DataTable("parentAccount_table",
+                                              col_defs,
+                                              parentAccount_object,
+                                              config);
+  billTo_table = new YAHOO.widget.DataTable("billTo_table",
+                                              col_defs,
+                                              billTo_object,
+                                              config);
+  soldTo_table = new YAHOO.widget.DataTable("soldTo_table",
+                                              col_defs,
+                                              soldTo_object,
+                                              config);
+  defaultPaymentMethod_table = new YAHOO.widget.DataTable("defaultPaymentMethod_table",
+                                              col_defs,
+                                              defaultPaymentMethod_object,
+                                              config);
+  ratePlanCharge_table = new YAHOO.widget.DataTable("ratePlanCharge_table",
+                                              col_defs,
+                                              ratePlanCharge_object,
+                                              config);
+  ratePlan_table = new YAHOO.widget.DataTable("ratePlan_table",
+                                              col_defs,
+                                              ratePlan_object,
+                                              config);
+  subscription_table = new YAHOO.widget.DataTable("subscription_table",
+                                              col_defs,
+                                              subscription_object,
+                                              config);
+  amendment_table = new YAHOO.widget.DataTable("amendment_table",
+                                              col_defs,
+                                              amendment_object,
+                                              config);
+  productRatePlanCharge_table = new YAHOO.widget.DataTable("productRatePlanCharge_table",
+                                              col_defs,
+                                              productRatePlanCharge_object,
+                                              config);
+  productRatePlan_table = new YAHOO.widget.DataTable("productRatePlan_table",
+                                              col_defs,
+                                              productRatePlan_object,
+                                              config);
+  product_table = new YAHOO.widget.DataTable("product_table",
+                                              col_defs,
+                                              product_object,
+                                              config);
+} // end of init function
+YAHOO.util.Event.onDOMReady(init);
+</script>
+
+<div class="core-content-3">
+  <div class="wrap">
+    <%= form_tag '/invoiceitems', { :name => 'form', :autocomplete => 'off' } do %>
+    <div class="page-title"><%= @invoiceitem_table_head %></div>
+    <%= render :file => 'shared/common_flash' %>
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('invoiceItem_table');" class="table-title">Invoice Item Details</a></div>
+      <div style="margin:0 0 0; display:block" id="invoiceItem_table"></div>
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('invoice_table');" class="table-title">Invoice Related To Invoice Item</a></div>
+      <div style="margin:0 0 0; display:none" id="invoice_table"></div>
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('account_table');" class="table-title">Account Related To Invoice</a></div>
+      <div style="margin:0 0 0; display: none" id="account_table"></div>
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('billTo_table');" class="table-title">Bill To Contact Related To Account</a></div>
+      <div style="margin:0 0 0; display:none" id="billTo_table"></div>
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('soldTo_table');" class="table-title">Sold To Contact Related To Account</a></div>
+      <div style="margin:0 0 0; display:none" id="soldTo_table"></div>
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('defaultPaymentMethod_table');" class="table-title">Default Payment Method Related To Account</a></div>
+      <div style="margin:0 0 0; display:none" id="defaultPaymentMethod_table"></div>
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('parentAccount_table');" class="table-title">Parent Account Related To Account</a></div>
+      <div style="margin:0 0 0; display:none" id="parentAccount_table"></div>
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('ratePlanCharge_table');" class="table-title">Rate Plan Charge Related To Invoice Item</a></div>
+      <div style="margin:0 0 0; display:none" id="ratePlanCharge_table"></div>
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('ratePlan_table');" class="table-title">Rate Plan Related To Rate Plan Charge</a></div>
+      <div style="margin:0 0 0; display:none" id="ratePlan_table"></div>
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('subscription_table');" class="table-title">Subscription Related To Rate Plan</a></div>
+      <div style="margin:0 0 0; display:none" id="subscription_table"></div>
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('amendment_table');" class="table-title">Amendment Related To Subscription</a></div>
+      <div style="margin:0 0 0; display:none" id="amendment_table"></div>
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('productRatePlanCharge_table');" class="table-title">Product Rate Plan Charge Related To Rate Plan Charge</a></div>
+      <div style="margin:0 0 0; display:none" id="productRatePlanCharge_table"></div>
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('productRatePlan_table');" class="table-title">Product Rate Plan Related To Product Rate Plan Charge</a></div>
+      <div style="margin:0 0 0; display:none" id="productRatePlan_table"></div>
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('product_table');" class="table-title">Product Related To Product Rate Plan</a></div>
+      <div style="margin:0 0 0; display:none" id="product_table"></div>
+      <div style="margin: 10px 0px 0px; float: right" onclick="location.href='/<%= controller_name %>?tid=<%= @tenant_id %>'" class="blue-button">
+        <div class="blue-button-left"></div>
+        <div class="blue-button-body">Back to <%= controller_name.capitalize %></div>
+        <div class="blue-button-right"></div>
+      </div>
+      <div class="clearfloat"></div>
+    <% end %>
+  </div>
+</div>

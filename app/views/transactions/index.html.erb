@@ -1,0 +1,90 @@
+<!-- css -->
+<link rel="stylesheet" type="text/css" href="/assets/yui-290/build/assets/skins/sam/skin.css"></link>
+<link rel="stylesheet" type="text/css" href="/assets/yui-290/build/datatable/assets/skins/sam/datatable.css"></link>
+<link rel="stylesheet" type="text/css" href="/assets/yui-290/build/paginator/assets/skins/sam/paginator.css"></link>
+<link rel="stylesheet" type="text/css" href="/assets/zuora_yui_override.css"></link>
+<!-- YUI js -->
+<script type="text/javascript" src="/assets/yui-290/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/element/element-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/datasource/datasource-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/datatable/datatable-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/container/container-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/paginator/paginator-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/connection/connection-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/json/json-min.js"></script>
+
+<script type="text/javascript">
+//
+// FUNCTION
+//
+var format_url = function(elCell, oRecord, oColumn, sData) {
+  var url = "/transactions" + "/" + oRecord.getData("objID") + "?tid=" + <%= @tenant_id %>;
+  elCell.innerHTML = "<a href='" + encodeURI(url) + "'>" + sData + "</a>";
+}
+
+var format_apply_url = function(elCell, oRecord, oColumn, sData) {
+  var url = "/transactions" + "/" + oRecord.getData("objID") + "?tid=" + <%= @tenant_id %> + "&do=apply";
+  elCell.innerHTML = "<a href='" + encodeURI(url) + "'>" + sData + "</a>";
+}
+
+function init() {
+  var col_defs = [
+      {key:"tenantId", width: 55, sortable:true, resizeable:true, label:"Tenant ID"},
+      {key:"type", width: 100, sortable:true, resizeable:true, label:"Datasource / Object", formatter: format_url},
+      {key:"operation", width: 60, sortable:true, resizeable:true, label:"Operation", formatter: format_apply_url},
+      {key:"objID", hidden:true}
+  ];
+
+  transaction_data = new YAHOO.util.LocalDataSource(<%= @json_response.html_safe %>);
+  transaction_data.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  transaction_data.responseSchema = {
+    resultsList: "response",
+    fields : [
+      { key: "operation", parser: "string" },
+      { key: "type", parser: "string" },
+      { key: "tenantId", parser: "string" },
+      { key: "objID", parser: "string"}
+    ]
+  }
+
+  var paginator = new YAHOO.widget.Paginator({
+      rowsPerPage: 25,
+      totalRecords: <%= @transaction_count %>,
+      template: "{PageLinks} Show {RowsPerPageDropdown} per page",
+      rowsPerPageOptions : [25,50,100,250],
+      containers : 'pagination'}
+  )
+
+  var config = {
+    dynamicData: false,
+    paginator: paginator,
+    MSG_EMPTY: "No InvoiceItem Records found."
+  }
+  
+  transaction_table = new YAHOO.widget.DataTable("transaction_table",
+                                                col_defs,
+                                                transaction_data,
+                                                config);
+
+} // end of init function
+YAHOO.util.Event.onDOMReady(init);
+</script>
+
+<div class="core-content-3">
+  <div class="wrap">
+    <%= form_tag '/transactions', { :name => 'form', :autocomplete => 'off' } do %>
+    <div class="page-title"><%= @transaction_table_head %></div>
+    <%= render :file => 'shared/common_flash' %>
+      <div style="margin-top: 10px" class="table-title">Choose a Transaction record</div>
+      <div style="float:right; margin-right: 10px; margin-bottom: 3px" id="pagination"></div>
+      <div class="clearfloat"></div>
+      <div style="margin:0 0 0" id="transaction_table"></div>
+      <div style="margin: 10px 0px 0px; float: right" onclick="location.href='/datasources?tid=<%= @tenant_id %>'" class="blue-button">
+        <div class="blue-button-left"></div>
+        <div class="blue-button-body">Back to Datasources</div>
+        <div class="blue-button-right"></div>
+      </div>
+      <div class="clearfloat"></div>
+    <% end %>
+  </div>
+</div>

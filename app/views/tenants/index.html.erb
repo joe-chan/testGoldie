@@ -1,0 +1,84 @@
+<!-- css -->
+<link rel="stylesheet" type="text/css" href="/assets/yui-290/build/assets/skins/sam/skin.css"></link>
+<link rel="stylesheet" type="text/css" href="/assets/yui-290/build/datatable/assets/skins/sam/datatable.css"></link>
+<link rel="stylesheet" type="text/css" href="/assets/yui-290/build/paginator/assets/skins/sam/paginator.css"></link>
+<link rel="stylesheet" type="text/css" href="/assets/zuora_yui_override.css"></link>
+<!-- YUI js -->
+<script type="text/javascript" src="/assets/yui-290/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/element/element-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/datasource/datasource-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/datatable/datatable-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/container/container-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/paginator/paginator-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/connection/connection-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/json/json-min.js"></script>
+
+<script type="text/javascript">
+ 
+//
+// COMMON VARIABLES
+//
+// Disabled -  need to create window without back buttons
+// var format_url_to_expand_instance = function(elCell, oRecord, oColumn, sData) {
+//  var url = "/ec2_collector/expand?instance_id=" + oRecord.getData("instance_id")
+//  elCell.innerHTML = "<a target='" + oRecord.getData('instance_id') + "' href='" + url + "'>" + sData + "</a>";
+//}
+var paginator
+var format_url = function(elCell, oRecord, oColumn, sData) {
+  var url = "/datasources?tid=" + oRecord.getData("id")
+  elCell.innerHTML = "<a href='" + encodeURI(url) + "'>" + sData + "</a>";
+}
+//
+// FUNCTION
+//
+function init() {
+  var col_defs = [
+      {key:"id", width: 100, sortable:true, resizeable:true, label:"ID"},
+      {key:"name", width: 200, sortable:true, resizeable:true, label:"Name", formatter:format_url}
+  ];
+
+  tenant_data = new YAHOO.util.LocalDataSource(<%= @json_response.html_safe %>);
+  tenant_data.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  tenant_data.responseSchema = {
+    resultsList: "response",
+    fields : [
+      { key: "id" },
+      { key: "name" }
+    ]
+  }
+
+  paginator = new YAHOO.widget.Paginator({
+      rowsPerPage: 25,
+      totalRecords: <%= @tenant_count %>,
+      template: "{PageLinks} Show {RowsPerPageDropdown} per page",
+      rowsPerPageOptions : [25,50,100,250],
+      containers : 'pagination'}
+  )
+
+  config = {
+    dynamicData: false,
+    paginator: paginator,
+    MSG_EMPTY: "No Tenants found."
+  }
+
+  tenant_collection_table = new YAHOO.widget.DataTable("tenant_collection_table",
+                                                col_defs,
+                                                tenant_data,
+                                                config);
+} // end of init function
+YAHOO.util.Event.onDOMReady(init);
+</script>
+
+<div class="core-content-3">
+  <div class="wrap">
+    <%= form_tag '/tenants/index', { :name => 'form', :autocomplete => 'off' } do %>
+    <div class="page-title"><%= @tenant_collection_table_head %></div>
+    <%= render :file => 'shared/common_flash' %>
+      <div style="margin-top: 10px" class="table-title">Choose a Tenant</div>
+      <div style="float:right; margin-right: 10px; margin-bottom: 3px" id="pagination"></div>
+      <div class="clearfloat"></div>
+      <div style="margin:0 0 0" id="tenant_collection_table"></div>
+      <div class="clearfloat"></div>
+    <% end %>
+  </div>
+</div>

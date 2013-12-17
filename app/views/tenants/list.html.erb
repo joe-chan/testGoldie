@@ -1,0 +1,92 @@
+<!-- css -->
+<link rel="stylesheet" type="text/css" href="/apps/yui-290/build/assets/skins/sam/skin.css"></link>
+<link rel="stylesheet" type="text/css" href="/apps/yui-290/build/datatable/assets/skins/sam/datatable.css"></link>
+<link rel="stylesheet" type="text/css" href="/apps/yui-290/build/paginator/assets/skins/sam/paginator.css"></link>
+<link rel="stylesheet" type="text/css" href="/apps/css/techlive_yui_override.css"/>
+<!-- js -->
+<script type="text/javascript" src="/apps/yui-290/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/element/element-min.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/datasource/datasource-min.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/datatable/datatable-min.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/container/container-min.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/paginator/paginator-min.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/connection/connection-min.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/json/json-min.js"></script>
+<script type="text/javascript">
+//
+// COMMON VARIABLES
+//
+// Disabled -  need to create window without back buttons
+// var format_url_to_expand_instance = function(elCell, oRecord, oColumn, sData) {
+//  var url = "/ec2_collector/expand?instance_id=" + oRecord.getData("instance_id")
+//  elCell.innerHTML = "<a target='" + oRecord.getData('instance_id') + "' href='" + url + "'>" + sData + "</a>";
+//}
+var paginator
+var format_url_to_expand_instance = function(elCell, oRecord, oColumn, sData) {
+  var url = "/ec2_collector/expand?instance_id=" + oRecord.getData("instance_id")
+  var top = (screen.height - 400) / 2;
+  var left = 100;
+  var w = screen.width - 2*left
+  elCell.innerHTML = "<a href='#' onclick=\"window.open('" + url + "','ec2_expand_popup_" + oRecord.getData('instance_id') + "','toolbar=no, height=400, width=" + w + ", top=" + top + ", left=" + left + "');return false;\">" + sData + "</a>";
+}
+//
+// FUNCTION
+//
+function init() {
+  var col_defs = [
+      {key:"instance_id", width: 100, sortable:true, resizeable:false, label:"Instance ID", formatter:format_url_to_expand_instance},
+      {key:"endpoint", width: 200, sortable:true, resizeable:false, label:"Endpoint"},
+      {key:"dns_name", width: 500, sortable:false, resizeable:false, label:"Public DNS Name"},
+      {key:"ip_addr", width: 100, sortable:false, resizeable:false, label:"Public IP"}
+  ];
+
+  ec2_instance_datasource = new YAHOO.util.LocalDataSource(<%= @datasource %>);
+  ec2_instance_datasource.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  ec2_instance_datasource.responseSchema = {
+    resultsList: "resultset.data",
+    fields : [
+      { key: "endpoint" },
+      { key: "instance_id" },
+      { key: "dns_name" },
+      { key: "ip_addr" },
+      { key: "key_name" }
+    ],
+    metaFields: { total_records: "total_records" }
+  }
+
+  paginator = new YAHOO.widget.Paginator({
+      rowsPerPage: 25,
+      totalRecords: <%= @instance_count %>,
+      template: "{PageLinks} Show {RowsPerPageDropdown} per page",
+      rowsPerPageOptions : [25,50,100,250],
+      containers : 'pagination'}
+  )
+
+  var config = {
+    dynamicData: false,
+    paginator: paginator,
+    MSG_EMPTY: "No EC2 Instances found."
+  }
+
+  ec2_instance_table = new YAHOO.widget.DataTable("ec2_instance_table",
+                                                col_defs,
+                                                ec2_instance_datasource,
+                                                config);
+} // end of init function
+YAHOO.util.Event.onDOMReady(init);
+</script>
+
+<div class="core-content-3">
+  <div class="wrap">  
+    <% form_tag '/ec2_collector/list', { :name => 'form', :autocomplete => 'off' } do %>
+    <div class="page-title"><%= @ec2_instance_table_head %></div>
+    <%= render :file => 'shared/common_flash' %>         
+      <div style="margin-top: 10px" class="table-title">Select an instance to choose files:</div>
+      <div style="float:right; margin-right: 10px; margin-bottom: 3px" id="pagination"></div>
+      <div class="clearfloat"></div>
+      <div style="margin:0 0 0" id="ec2_instance_table"></div>
+      <div class="clearfloat"></div>
+    <% end -%>
+  </div>
+</div>
+

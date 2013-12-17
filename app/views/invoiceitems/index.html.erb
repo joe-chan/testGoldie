@@ -1,0 +1,180 @@
+<!-- css -->
+<link rel="stylesheet" type="text/css" href="/assets/yui-290/build/assets/skins/sam/skin.css"></link>
+<link rel="stylesheet" type="text/css" href="/assets/yui-290/build/datatable/assets/skins/sam/datatable.css"></link>
+<link rel="stylesheet" type="text/css" href="/assets/yui-290/build/paginator/assets/skins/sam/paginator.css"></link>
+<link rel="stylesheet" type="text/css" href="/assets/zuora_yui_override.css"></link>
+<!-- YUI js -->
+<script type="text/javascript" src="/assets/yui-290/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/element/element-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/datasource/datasource-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/datatable/datatable-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/container/container-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/paginator/paginator-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/connection/connection-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/json/json-min.js"></script>
+
+<script type="text/javascript">
+//
+// FUNCTION
+//
+function toggle_visibility(id) {
+  var e = document.getElementById(id);
+  if(e.style.display == 'block')
+    e.style.display = 'none';
+  else
+    e.style.display = 'block';
+}
+
+var format_url = function(elCell, oRecord, oColumn, sData) {
+  var url = "/invoiceitems" + "/" + oRecord.getData("objID") + "?tid=" + <%= @tenant_id %>;
+  var dd = new Date(sData);
+  if (isNaN(dd.getMonth()) || isNaN(dd.getDate()) || isNaN(dd.getFullYear())) {
+    elCell.innerHTML = "";
+  } else {
+    elCell.innerHTML = "<a href='" + encodeURI(url) + "'>" + (dd.getMonth()+1) + "/" +
+      dd.getDate() + "/" +  dd.getFullYear() + "</a>";
+  }
+}
+
+var format_date = function(elCell, oRecord, oColumn, sData) {
+  var dd = new Date(sData);
+  if (isNaN(dd.getMonth()) || isNaN(dd.getDate()) || isNaN(dd.getFullYear())) {
+    elCell.innerHTML = "";
+  } else {
+    elCell.innerHTML = (dd.getMonth()+1) + "/" + dd.getDate() + "/" +  dd.getFullYear();
+  }
+}
+
+function init() {
+  var col_defs = [
+      {key:"chargeDate", width: 60, sortable:true, resizeable:true, label:"Charge Date", formatter: format_url},
+      {key:"chargeAmount", width: 55, sortable:true, resizeable:true, label:"Amount",
+        formatter:YAHOO.widget.DataTable.formatNumber, numberOptions: {decimalPlaces:2}},
+      {key:"invoiceNumber", width: 70, sortable:true, resizeable:true, label:"Invoice #"},
+      {key:"invoiceAmount", width: 55, sortable:true, resizeable:true, label:"Amount",
+        formatter:YAHOO.widget.DataTable.formatNumber, numberOptions: {decimalPlaces:2}},
+      {key:"invoiceStatus", width: 50, sortable:true, resizeable:true, label:"Status"},
+      {key:"invoicePaymentAmount", width: 55, sortable:true, resizeable:true, label:"Payment",
+        formatter:YAHOO.widget.DataTable.formatNumber, numberOptions: {decimalPlaces:2}},
+      {key:"subscriptionName", width: 80, sortable:true, resizeable:true, label:"Subscription"},
+      {key:"currency", width: 45, sortable:true, resizeable:true, label:"Currency"},
+      {key:"accountNumber", width: 80, sortable:true, resizeable:true, label:"Account Name"},
+      {key:"objID", hidden:true}
+  ];
+
+  var total_invoice_amount_col_defs = [
+      {key:"currency", width: 45, sortable:true, resizeable:true, label:"Currency"},
+      {key:"totalAmount", width: 80, sortable:true, resizeable:true, label:"Total Amount",
+        formatter:YAHOO.widget.DataTable.formatNumber, numberOptions: {decimalPlaces:2}}
+  ];
+
+  var average_invoice_amount_col_defs = [
+      {key:"currency", width: 45, sortable:true, resizeable:true, label:"Currency"},
+      {key:"count", width: 80, sortable:true, resizeable:true, label:"Total Invoices"},
+      {key:"total", width: 80, sortable:true, resizeable:true, label:"Total Amount",
+         formatter:YAHOO.widget.DataTable.formatNumber, numberOptions: {decimalPlaces:2}},
+      {key:"avg", width: 100, sortable:true, resizeable:true, label:"Average Amount",
+         formatter:YAHOO.widget.DataTable.formatNumber, numberOptions: {decimalPlaces:2}}
+  ];
+
+  invoiceitem_data = new YAHOO.util.LocalDataSource(<%= @json_response.html_safe %>);
+  invoiceitem_data.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  invoiceitem_data.responseSchema = {
+    resultsList: "response",
+    fields : [
+      { key: "chargeDate", parser: "date" },
+      { key: "chargeAmount", parser: "number" },
+      { key: "invoiceNumber", parser: "string" },
+      { key: "invoiceAmount", parser: "number" },
+      { key: "invoiceStatus", parser: "string" },
+      { key: "invoicePaymentAmount", parser: "number" },
+      { key: "subscriptionName", parser: "string" },
+      { key: "currency", parser: "string" },
+      { key: "accountNumber", parser: "string" },
+      { key: "objID", parser: "string"}
+    ]
+  }
+
+  totalInvoiceAmount_data = new YAHOO.util.LocalDataSource(<%= @json_response_2.html_safe %>);
+  totalInvoiceAmount_data.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  totalInvoiceAmount_data.responseSchema = {
+    resultsList: "response",
+    fields : [
+      { key: "currency", parser: "string" },
+      { key: "totalAmount", parser: "number" }
+    ]
+  }
+
+  averageInvoiceAmount_data = new YAHOO.util.LocalDataSource(<%= @json_response_3.html_safe %>);
+  averageInvoiceAmount_data.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  averageInvoiceAmount_data.responseSchema = {
+    resultsList: "response",
+    fields : [
+      { key: "currency", parser: "string" },
+      { key: "total", parser: "number" },
+      { key: "count", parser: "number" },
+      { key: "avg", parser: "number" }
+    ]
+  }
+
+  var paginator = new YAHOO.widget.Paginator({
+      rowsPerPage: 25,
+      totalRecords: <%= @invoiceitem_count %>,
+      template: "{PageLinks} Show {RowsPerPageDropdown} per page",
+      rowsPerPageOptions : [25,50,100,250],
+      containers : 'pagination'}
+  )
+
+  var config = {
+    dynamicData: false,
+    paginator: paginator,
+    MSG_EMPTY: "No InvoiceItem Records found."
+  }
+
+  var no_paging_config = {
+    dynamicData: false,
+    MSG_EMPTY: "No aggregated Data found."
+  }
+  
+  invoiceitem_table = new YAHOO.widget.DataTable("invoiceitem_table",
+                                                col_defs,
+                                                invoiceitem_data,
+                                                config);
+
+  totalInvoiceAmount_table = new YAHOO.widget.DataTable("totalInvoiceAmount_table",
+                                                total_invoice_amount_col_defs,
+                                                totalInvoiceAmount_data,
+                                                no_paging_config);
+
+  averageInvoiceAmount_table = new YAHOO.widget.DataTable("averageInvoiceAmount_table",
+                                                average_invoice_amount_col_defs,
+                                                averageInvoiceAmount_data,
+                                                no_paging_config);
+} // end of init function
+YAHOO.util.Event.onDOMReady(init);
+</script>
+
+<div class="core-content-3">
+  <div class="wrap">
+    <%= form_tag '/invoiceitems', { :name => 'form', :autocomplete => 'off' } do %>
+    <div class="page-title"><%= @invoiceitem_table_head %></div>
+    <%= render :file => 'shared/common_flash' %>
+      <div style="margin-top: 10px" class="table-title">Choose an Invoiceitem record</div>
+      <div style="float:right; margin-right: 10px; margin-bottom: 3px" id="pagination"></div>
+      <div class="clearfloat"></div>
+      <div style="margin:0 0 0" id="invoiceitem_table"></div>
+      
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('totalInvoiceAmount_table');" class="table-title">Total Invoice Amount</a></div>
+      <div style="margin:0 0 0; display:block" id="totalInvoiceAmount_table"></div>
+      <div style="margin:10px 0 10px"><a href="javascript:" onclick="toggle_visibility('averageInvoiceAmount_table');" class="table-title">Average Invoice Amount</a></div>
+      <div style="margin:0 0 0; display:block" id="averageInvoiceAmount_table"></div>
+      
+      <div style="margin: 10px 0px 0px; float: right" onclick="location.href='/datasources?tid=<%= @tenant_id %>'" class="blue-button">
+        <div class="blue-button-left"></div>
+        <div class="blue-button-body">Back to Datasources</div>
+        <div class="blue-button-right"></div>
+      </div>
+      <div class="clearfloat"></div>
+    <% end %>
+  </div>
+</div>

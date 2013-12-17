@@ -1,0 +1,13 @@
+<div class="core-content-3">
+  <div class="wrap">
+    <div id="error-message">
+      <div id="error-message-header">
+        <em>Sorry! There was an error when processing your request.</em>
+          <% if flash[:error] %>
+          Error message: <%= flash[:error] %>
+          <% end %>
+      </div>
+    </div>    
+  </div>  
+</div>
+

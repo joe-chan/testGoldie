@@ -1,0 +1,14 @@
+#techlive_topnav { background: none; border: none; padding-top: 3px;}
+
+#nav_dashboard, #nav_profile, #nav_help, #nav_report { color: #3C3D3D;min-width: 100px; border: none; text-align: center; padding: 0px }
+#nav_dashboard:hover, #nav_profile:hover, #nav_help:hover, #nav_report:hover { color: #FFFFFF; background: #FF9600; cursor: pointer }
+#nav_dashboard, #nav_profile { background: none }
+#nav_help.yuimenubaritemlabel-hassubmenu-selected, #nav_report.yuimenubaritemlabel-hassubmenu-selected {color: #FFFFFF; background: #FF9600;}
+
+#nav_tutorial a, #nav_wiki a, #nav_mc_ug_pdf a, #nav_mc_ug_html a, #nav_ug_pdf a, #nav_ug_html a{color: #3C3D3D}
+#nav_tutorial a:hover, #nav_wiki a:hover, #nav_mc_ug_pdf a:hover, #nav_mc_ug_html a:hover, #nav_ug_pdf a:hover, #nav_ug_html a:hover{color: #FFFFFF; background: #FF9600; cursor: pointer}
+
+#nav_apps_tier a, #nav_search_servers a {color: #3C3D3D}
+#nav_apps_tier a:hover, #nav_search_servers a:hover {color: #FFFFFF; background: #FF9600; cursor: pointer}
+
+#nav_search_servers a.yuimenuitemlabel-hassubmenu-selected, #nav_apps_tier a.yuimenuitemlabel-hassubmenu-selected {color: #FFFFFF; background: #FF9600}

@@ -1,0 +1,468 @@
+<!-- css -->
+<link rel="stylesheet" type="text/css" href="/apps/yui-290/build/assets/skins/sam/skin.css"></link>
+<link rel="stylesheet" type="text/css" href="/apps/yui-290/build/autocomplete/assets/skins/sam/autocomplete.css"></link>
+<link rel="stylesheet" type="text/css" href="/apps/yui-290/build/calendar/assets/skins/sam/calendar.css"></link>
+<link rel="stylesheet" type="text/css" href="/apps/yui-290/build/container/assets/skins/sam/container.css"></link>
+<link rel="stylesheet" type="text/css" href="/apps/yui-290/build/datatable/assets/skins/sam/datatable.css"></link>
+<link rel="stylesheet" type="text/css" href="/apps/css/techlive_yui_override.css"/>
+<!-- js -->
+<script type="text/javascript" src="/apps/javascripts/prototype-1.4.js"></script>
+<script type="text/javascript" src="/apps/javascripts/html-form-input-mask.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/yahoo/yahoo-min.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/event/event-min.js" ></script> 
+<script type="text/javascript" src="/apps/yui-290/build/dom/dom-min.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/datasource/datasource-min.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/autocomplete/autocomplete-min.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/calendar/calendar-min.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/container/container-min.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/element/element-min.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/datatable/datatable-min.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/paginator/paginator-min.js"></script>
+<script type="text/javascript" src="/apps/yui-290/build/animation/animation-min.js"></script>
+<script type="text/javascript">
+//
+// COMMON VARIABLES
+//
+var data = {
+  address_entries: [
+    <% @address_entries.each_with_index { |entry, index| %>
+      {email:"<%= entry[1] %>",
+       full_name:"<%= entry[2] %>"
+      }<%= index == @address_entries.size-1 ? '' : ',' %>
+    <% } %>
+  ]
+}
+
+var all_problem_table
+var selected_problem_table
+var select_problem_dialog
+var undo_list = new Array()
+//
+// Common functions
+//
+function display_conf(show) {
+  var us_tel = document.getElementById('us_tel');
+  var tel = document.getElementById('tel');
+  var mod = document.getElementById('mod');
+  var ptc = document.getElementById('ptc');
+  if (show) {
+    us_tel.style.display = '';
+    tel.style.display = '';
+    mod.style.display = '';
+    ptc.style.display = '';
+    document.getElementById('moderator_code').focus()
+  } else {
+    us_tel.style.display = 'none';
+    tel.style.display = 'none';
+    mod.style.display = 'none';
+    ptc.style.display = 'none';
+  }
+}
+function show_select_problem_dialog() {
+  if (!all_problem_table) {
+    // YUI code for all problem table
+    var all_problem_datasource
+    var data = {
+      all_problems: [
+        <% @problems.each_with_index { |problem, index|
+          # do not show any problem in techlive queue
+          next if problem.problem_queue.id == 1 && current_account_id != $techlive_account.id %>
+          {check:"<%= @selected_problems.include?(problem) ? "true" : "" %>",
+           id:<%= problem.id %>,
+           key:"<%= problem.problem_key  %>",
+           summary:"<%= escape_javascript problem.summary %>",
+           queue:"<%= escape_javascript problem.problem_queue.name %>",
+           severity:"<%= problem.severity_desc %>",
+           status:"<%= problem.status_desc %>",
+           created_at:"<%= mmddyyyy(problem.created_at) %>",
+           updated_at:"<%= mmddyyyy(problem.updated_at) %>"
+         }<%= index == @problems.size-1 ? '' : ',' %>
+        <% } %>
+      ]
+    }
+    var myColumnDefs = [
+      {key:"check", width: 10, label:"", formatter:"checkbox"},
+      {key:"key", width: 65, sortable:true, resizeable:false, label:"Problem ID" },
+      {key:"summary", width: 420, sortable:true, resizeable:false, label:"Summary"},
+      {key:"severity", width: 55, sortable:true, resizeable:false, label:"Severity"},
+      {key:"status", width: 110, sortable:true, resizeable:false, label:"Status"}
+    ];
+    all_problem_datasource = new YAHOO.util.DataSource(data.all_problems);
+    all_problem_datasource.responseType = YAHOO.util.DataSource.TYPE_JSARRAY;
+    all_problem_datasource.responseSchema = {
+      fields: [{key:"check"},
+               {key:"id"},
+               {key:"key"},
+               {key:"summary"},
+               {key:"queue"},
+               {key:"severity"},
+               {key:"status"},
+               {key:"created_at"},
+               {key:"updated_at"}
+      ]
+    }
+    var oConfigs = {
+      paginator: new YAHOO.widget.Paginator({
+        rowsPerPage: 10,
+        totalRecords: <%= @problems.size %>,
+        template: "{PageLinks} Show {RowsPerPageDropdown} per page",
+        rowsPerPageOptions : [5,10,15],
+        containers : 'pagination'}
+      ),
+      MSG_EMPTY: "You have not raised any problems. <a href='<%= new_problem_path %>'>Raise a problem now</a>"
+    }
+    all_problem_table = new YAHOO.widget.DataTable("all_problem_table",
+                                                   myColumnDefs,
+                                                   all_problem_datasource,
+                                                   oConfigs);
+    all_problem_table.subscribe("checkboxClickEvent", function(oArgs){
+        var elCheckbox = oArgs.target;
+        var oRecord = this.getRecord(elCheckbox);
+        undo_list.push(oRecord.getId());
+        oRecord.setData("check",elCheckbox.checked);
+    });
+  }
+  select_problem_dialog.show();
+}
+
+function submit_form() {
+  var rs_selected = selected_problem_table.getRecordSet();
+  var selected = ""
+  for (i=0;i<rs_selected.getLength();i++) {
+    selected = selected + rs_selected.getRecord(i).getData("id")
+    if (i != rs_selected.getLength()-1) {
+      selected = selected + ","
+    }
+  }
+  document.getElementById('selected_problems').value = selected;
+  document.form.submit();
+}
+
+//
+// INIT
+//
+function init() {
+  // Input mask for the phone numbers
+  Xaprb.InputMask.setupElementMasks()
+  YAHOO.example.BasicLocal = function() {
+    var oDS = new YAHOO.util.DataSource(data.address_entries);
+    oDS.responseType = YAHOO.util.DataSource.TYPE_JSARRAY;
+    oDS.responseSchema = {
+      fields: ["email","full_name"]
+    };
+    var oAC = new YAHOO.widget.AutoComplete("invitees", "invitee_suggestion", oDS);
+    oAC.formatResult = function(oResultData, sQuery, sResultMatch) {
+      return "<div style='float: left;min-width: 250px'>" + oResultData[0] + "</div><div style='float: left'>" + oResultData[1] + "</div><div class='clearfloat'></div>";
+    };
+    oAC.delimChar = [",", ";", " "]
+    oAC.prehighlightClassName = "yui-ac-prehighlight";
+    return {
+      oDS: oDS,
+      oAC: oAC
+    };
+  }();
+  document.getElementById('topic').focus()
+}
+
+function init_calendar_dialog() {
+  var Event = YAHOO.util.Event,
+      Dom = YAHOO.util.Dom,
+      dialog,
+      calendar;
+  var showBtn = Dom.get("date");
+  Event.on(showBtn, "click", function() {
+    // Lazy Dialog Creation - Wait to create the Dialog, and setup document click listeners, until the first time the button is clicked.
+    if (!dialog) {
+        // Hide Calendar if we click anywhere in the document other than the calendar
+        Event.on(document, "click", function(e) {
+            var el = Event.getTarget(e);
+            var dialogEl = dialog.element;
+            if (el != dialogEl && !Dom.isAncestor(dialogEl, el) && el != showBtn && !Dom.isAncestor(showBtn, el)) {
+                dialog.hide();
+            }
+        });
+        function closeHandler() {
+            dialog.hide();
+        }
+        dialog = new YAHOO.widget.Dialog("calendar_container", {
+          visible:false,
+          width:'16em',
+          context:["date", "tl", "bl"],
+          buttons:[{text:"Close", handler: closeHandler}],
+          draggable:false,
+          close:true
+        });
+        dialog.setHeader('Pick a Session Date');
+        dialog.setBody('<div id="cal"></div>');
+        dialog.render(document.body);
+        dialog.showEvent.subscribe(function() {
+            if (YAHOO.env.ua.ie) {
+                dialog.fireEvent("changeContent");
+            }
+        });
+    }
+    // Lazy Calendar Creation - Wait to create the Calendar until the first time the button is clicked.
+    if (!calendar) {
+        calendar = new YAHOO.widget.Calendar("cal", {
+            iframe:false,          // Turn iframe off, since container has iframe support.
+            mindate: "<%= mmddyyyy(Time.zone.now) %>",
+            hide_blank_weeks:true  // Enable, to demonstrate how we handle changing height, using changeContent
+        });
+        calendar.render();
+        calendar.selectEvent.subscribe(function() {
+            if (calendar.getSelectedDates().length > 0) {
+                Dom.get("datetime_selection_user_specified").checked = true
+                var selDate = calendar.getSelectedDates()[0];
+                // Pretty Date Output, using Calendar's Locale values: Friday, 8 February 2008
+                var wStr = calendar.cfg.getProperty("WEEKDAYS_LONG")[selDate.getDay()];
+                var dStr = selDate.getDate();
+                var mStr = calendar.cfg.getProperty("MONTHS_LONG")[selDate.getMonth()];
+                var yStr = selDate.getFullYear();
+                Dom.get("date").value = wStr + ", " + dStr + " " + mStr + " " + yStr;
+            } else {
+                Dom.get("date").value = "";
+            }
+            dialog.hide();
+        });
+        calendar.renderEvent.subscribe(function() {
+            // Tell Dialog it's contents have changed, which allows
+            // container to redraw the underlay (for IE6/Safari2)
+            dialog.fireEvent("changeContent");
+        });
+    }
+    var seldate = calendar.getSelectedDates();
+    if (seldate.length > 0) {
+        // Set the pagedate to show the selected date if it exists
+        calendar.cfg.setProperty("pagedate", seldate[0]);
+        calendar.render();
+    }
+    dialog.show();
+  });
+}
+
+function init_select_problem_dialog() {
+  var handleOK = function() {
+    this.cancel();
+    var rs_all = all_problem_table.getRecordSet();
+    selected_problem_table.getRecordSet().deleteRecords(0, selected_problem_table.getRecordSet().getLength() );
+    for (i=0;i<rs_all.getLength();i++) {
+      var record = rs_all.getRecord(i);
+      if (record.getData("check")) {
+        selected_problem_table.addRow(
+         { id: record.getData("id"),
+           key: record.getData("key") ,
+           summary: record.getData("summary"),
+           queue: record.getData("queue"),
+           severity: record.getData("severity"),
+           status: record.getData("status"),
+           created_at: record.getData("created_at"),
+           updated_at: record.getData("updated_at")
+         })
+      }
+    }
+    selected_problem_table.render();
+    undo_list = new Array();
+  };
+  var handleCancel = function() {
+    this.cancel();
+    for (i=0;i<undo_list.length;i++) {
+      var record = all_problem_table.getRecord(undo_list[i])
+      var value = record.getData("check")
+      record.setData("check", !value);
+    }
+    undo_list = new Array();
+    all_problem_table.render();
+  };
+  if (!select_problem_dialog) {
+    select_problem_dialog = new YAHOO.widget.Dialog("all_problem_container",
+                                               { width : "60em",
+                                                 modal : true,
+                                                 fixedcenter : true,
+                                                 visible : false,
+                                                 constraintoviewport : true,
+                                                 buttons : [ { text:"OK", handler:handleOK },
+                                                             { text:"Cancel", handler:handleCancel } ] }
+    );
+    select_problem_dialog.setHeader('Add/Remove Problem(s) To Be Addressed');
+    select_problem_dialog.setBody('<div style="float:right" id="pagination"><div class="clearfloat"></div></div><div style="margin-top: 28px" id="all_problem_table"></div>');
+    select_problem_dialog.render(document.body);
+  }
+}
+function init_selected_problem_table() {
+  // YUI code for selected problem table
+  var selected_problem_datasource
+  var data = {
+    selected_problems: [
+      <% @selected_problems.each_with_index { |problem, index| %>
+        {id:<%= problem.id %>,
+         key:"<%= problem.problem_key  %>",
+         summary:"<%= escape_javascript problem.summary %>",
+         queue:"<%= escape_javascript problem.problem_queue.name %>",
+         severity:"<%= problem.severity_desc %>",
+         status:"<%= problem.status_desc %>",
+         created_at:"<%= mmddyyyy(problem.created_at) %>",
+         updated_at:"<%= mmddyyyy(problem.updated_at) %>"
+       }<%= index == @selected_problems.size-1 ? '' : ',' %>
+      <% } %>
+    ]
+  } // end of data
+  var myColumnDefs = [
+      {key:"key", width: 65, sortable:true, resizeable:false, label:"Problem ID" },
+      {key:"summary", width: 260, sortable:true, resizeable:false, label:"Summary"},
+      {key:"severity", width: 47, sortable:true, resizeable:false, label:"Severity"},
+      {key:"status", width: 110, sortable:true, resizeable:false, label:"Status"}
+  ];
+  selected_problem_datasource = new YAHOO.util.DataSource(data.selected_problems);
+  selected_problem_datasource.responseType = YAHOO.util.DataSource.TYPE_JSARRAY;
+  selected_problem_datasource.responseSchema = {
+    fields: [{key:"id"},
+            {key:"key"},
+            {key:"summary"},
+            {key:"queue"},
+            {key:"severity"},
+            {key:"status"},
+            {key:"created_at"},
+            {key:"updated_at"}
+    ]
+  }
+  selected_problem_table = new YAHOO.widget.DataTable("selected_problem_table",
+                                                     myColumnDefs,
+                                                     selected_problem_datasource,
+                                                     {MSG_EMPTY: "No problems selected for discussion"});
+  // End of YUI code for selected problem table
+}
+YAHOO.util.Event.onDOMReady(init_calendar_dialog)
+YAHOO.util.Event.onDOMReady(init_select_problem_dialog);
+YAHOO.util.Event.onContentReady("selected_problem_table", init_selected_problem_table);
+YAHOO.util.Event.onDOMReady(init)
+</script>
+<div class="core-content-3">
+  <div class="wrap">  
+    <% form_tag '/warroom_schedules', { :name => 'form', :autocomplete => 'off' }  do %>
+      <%= hidden_field_tag :selected_problems, "", {:id => :selected_problems} %>
+      <div class="page-title">Schedule a New Session</div>
+      <%= render :file => 'shared/common_flash', :locals => { :error_messages => @warroom_schedule.errors  } %>                        
+      <table class="input-table">
+        <tr>
+          <td style="width:165px" align="right"><label>*Topic:</label></td>
+          <td style="width:565px"><%= text_field_tag 'topic', @warroom_schedule.topic, { :style => "width: 500px" }%></td>
+        </tr>
+        <tr>
+          <td align="right"><label>Invite by TechLive nickname or e-mail:</label><br/><em>(comma-separated)</em></td>
+          <td>
+            <div style="width:500px">
+              <%= text_field_tag 'invitees', @invitees, { :style => "width: 500px" } %>
+              <div id="invitee_suggestion_container">
+                <div id="invitee_suggestion"></div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td align="right"><label>*Date & time:</label><br/><em><%= @warroom_schedule.time_zone %> time zone</em></td>
+          <td>
+            <div style="float: left;"><input <%= "checked='true'" if @datetime_selection == WarroomSchedule::DATETIME_SELECTION_NOW %> id="datetime_selection_now" name="datetime_selection" type="radio" value="<%= WarroomSchedule::DATETIME_SELECTION_NOW %>"/>Now</div>            
+            <div style="float:left;margin-left: 30px; "><input <%= "checked='true'" if @datetime_selection == WarroomSchedule::DATETIME_SELECTION_USER_SPECIFIED %> id="datetime_selection_user_specified" name="datetime_selection" type="radio" value="<%= WarroomSchedule::DATETIME_SELECTION_USER_SPECIFIED %>"/></div>
+            <div style="float:left;" onclick="document.getElementById('datetime_selection_user_specified').checked=true;">
+              <%= text_field_tag 'date', @warroom_schedule.start_time.strftime("%A, %d %B %Y"), {:readonly => true} %>
+            </div>
+            <div style="float:left;">
+              <select onclick="document.getElementById('datetime_selection_user_specified').checked=true;" name="start_time">
+                  <%  start_time = @warroom_schedule.start_time.strftime("%H:%M") %>
+                  <option value="00:00:00" <%= start_time=="00:00" ? 'selected=true' : '' %> >12:00am</option><option value="00:30:00" <%= start_time=="00:30" ? 'selected=true' : '' %> >12:30am</option>
+                  <option value="01:00:00" <%= start_time=="01:00" ? 'selected=true' : '' %> >1:00am</option><option value="01:30:00" <%= start_time=="01:30" ? 'selected=true' : '' %> > 1:30am</option>
+                  <option value="02:00:00" <%= start_time=="02:00" ? 'selected=true' : '' %> >2:00am</option><option value="02:30:00" <%= start_time=="02:30" ? 'selected=true' : '' %> > 2:30am</option>
+                  <option value="03:00:00" <%= start_time=="03:00" ? 'selected=true' : '' %> >3:00am</option><option value="03:30:00" <%= start_time=="03:30" ? 'selected=true' : '' %> > 3:30am</option>
+                  <option value="04:00:00" <%= start_time=="04:00" ? 'selected=true' : '' %> >4:00am</option><option value="04:30:00" <%= start_time=="04:30" ? 'selected=true' : '' %> > 4:30am</option>
+                  <option value="05:00:00" <%= start_time=="05:00" ? 'selected=true' : '' %> >5:00am</option><option value="05:30:00" <%= start_time=="05:30" ? 'selected=true' : '' %> > 5:30am</option>
+                  <option value="06:00:00" <%= start_time=="06:00" ? 'selected=true' : '' %> >6:00am</option><option value="06:30:00" <%= start_time=="06:30" ? 'selected=true' : '' %> > 6:30am</option>
+                  <option value="07:00:00" <%= start_time=="07:00" ? 'selected=true' : '' %> >7:00am</option><option value="07:30:00" <%= start_time=="07:30" ? 'selected=true' : '' %> > 7:30am</option>
+                  <option value="08:00:00" <%= start_time=="08:00" ? 'selected=true' : '' %> >8:00am</option><option value="08:30:00" <%= start_time=="08:30" ? 'selected=true' : '' %> > 8:30am</option>
+                  <option value="09:00:00" <%= start_time=="09:00" ? 'selected=true' : '' %> >9:00am</option><option value="09:30:00" <%= start_time=="09:30" ? 'selected=true' : '' %> > 9:30am</option>
+                  <option value="10:00:00" <%= start_time=="10:00" ? 'selected=true' : '' %> >10:00am</option><option value="10:30:00" <%= start_time=="10:30" ? 'selected=true' : '' %> >10:30am</option>
+                  <option value="11:00:00" <%= start_time=="11:00" ? 'selected=true' : '' %> >11:00am</option><option value="11:30:00" <%= start_time=="11:30" ? 'selected=true' : '' %> >11:30am</option>
+                  <option value="12:00:00" <%= start_time=="12:00" ? 'selected=true' : '' %> >12:00pm</option><option value="12:30:00" <%= start_time=="12:30" ? 'selected=true' : '' %> >12:30pm</option>
+                  <option value="13:00:00" <%= start_time=="13:00" ? 'selected=true' : '' %> >1:00pm</option><option value="13:30:00" <%= start_time=="13:30" ? 'selected=true' : '' %> >1:30pm</option>
+                  <option value="14:00:00" <%= start_time=="14:00" ? 'selected=true' : '' %> >2:00pm</option><option value="14:30:00" <%= start_time=="14:30" ? 'selected=true' : '' %> >2:30pm</option>
+                  <option value="15:00:00" <%= start_time=="15:00" ? 'selected=true' : '' %> >3:00pm</option><option value="15:30:00" <%= start_time=="15:30" ? 'selected=true' : '' %> >3:30pm</option>
+                  <option value="16:00:00" <%= start_time=="16:00" ? 'selected=true' : '' %> >4:00pm</option><option value="16:30:00" <%= start_time=="16:30" ? 'selected=true' : '' %> >4:30pm</option>
+                  <option value="17:00:00" <%= start_time=="17:00" ? 'selected=true' : '' %> >5:00pm</option><option value="17:30:00" <%= start_time=="17:30" ? 'selected=true' : '' %> >5:30pm</option>
+                  <option value="18:00:00" <%= start_time=="18:00" ? 'selected=true' : '' %> >6:00pm</option><option value="18:30:00" <%= start_time=="18:30" ? 'selected=true' : '' %> >6:30pm</option>
+                  <option value="19:00:00" <%= start_time=="19:00" ? 'selected=true' : '' %> >7:00pm</option><option value="19:30:00" <%= start_time=="19:30" ? 'selected=true' : '' %> >7:30pm</option>
+                  <option value="20:00:00" <%= start_time=="20:00" ? 'selected=true' : '' %> >8:00pm</option><option value="20:30:00" <%= start_time=="20:30" ? 'selected=true' : '' %> >8:30pm</option>
+                  <option value="21:00:00" <%= start_time=="21:00" ? 'selected=true' : '' %> >9:00pm</option><option value="21:30:00" <%= start_time=="21:30" ? 'selected=true' : '' %> >9:30pm</option>
+                  <option value="22:00:00" <%= start_time=="22:00" ? 'selected=true' : '' %> >10:00pm</option><option value="22:30:00" <%= start_time=="22:30" ? 'selected=true' : '' %> >10:30pm</option>
+                  <option value="23:00:00" <%= start_time=="23:00" ? 'selected=true' : '' %> >11:00pm</option><option value="23:30:00" <%= start_time=="23:30" ? 'selected=true' : '' %> >11:30pm</option>
+              </select>
+            </div>
+            <div class="clearfloat"></div>
+          </td>
+        </tr>
+        <tr>
+          <td align="right"><label>*Duration:</label></td>
+          <td>
+            <select name="duration">
+              <option value="1" <%= @warroom_schedule.duration == 1 ? 'selected=true' : '' %> >1 hour</option>
+              <option value="2" <%= @warroom_schedule.duration == 2 ? 'selected=true' : '' %> >2 hours</option>
+              <option value="3" <%= @warroom_schedule.duration == 3 ? 'selected=true' : '' %> >3 hours</option>
+              <option value="4" <%= @warroom_schedule.duration == 4 ? 'selected=true' : '' %> >4 hours</option>
+              <option value="5" <%= @warroom_schedule.duration == 5 ? 'selected=true' : '' %> >5 hours</option>
+              <option value="6" <%= @warroom_schedule.duration == 6 ? 'selected=true' : '' %> >6 hours</option>
+              <option value="7" <%= @warroom_schedule.duration == 7 ? 'selected=true' : '' %> >7 hours</option>
+              <option value="8" <%= @warroom_schedule.duration == 8 ? 'selected=true' : '' %> >8 hours</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td valign="top" align="right"><label>*Audio conference numbers:</label></td>
+          <td>
+            <input type="radio" style="width:auto" onclick="display_conf(true);" name="audio_conference_selection" value="<%= Account::AUDIO_CONFERENCE_SELF_PROVIDED %>" <%= @warroom_schedule.has_audio_conf? ? 'checked' : '' %>>
+            Yes. Below are the numbers.&nbsp;&nbsp;&nbsp;&nbsp;
+            <input type="radio" style="width:auto" onclick="display_conf(false);" name="audio_conference_selection" value="<%= Account::AUDIO_CONFERENCE_UNAVAILABLE %>" <%= @warroom_schedule.has_audio_conf? ? '' : 'checked' %>>
+            No. I do not have one.                                                 
+          </td>
+        </tr>
+        <tr id="conf_info">
+          <td></td>
+          <td>
+            <table>
+              <tr id="mod" style="display: <%= @warroom_schedule.has_audio_conf? ? '' : 'none' %>">
+                <td align="right"><label style="font-size: 11px">Moderator Code:</label></td>
+                <td colspan="2"><%= text_field_tag :moderator_code, @warroom_schedule.moderator_code %></td>
+              </tr>
+              <tr id="ptc" style="display: <%= @warroom_schedule.has_audio_conf? ? '' : 'none' %>">
+                <td align="right"><label style="font-size: 11px">Participant Code:</label></td>
+                <td colspan="2"><%= text_field_tag :participant_code, @warroom_schedule.participant_code %></td>
+              </tr>
+              <tr id="us_tel" style="display: <%= @warroom_schedule.has_audio_conf? ? '' : 'none' %>">
+                <td align="right"><label style="font-size: 11px">Toll (US/Canada):</label></td>
+                <td colspan="2">
+                  <input type="text" value="<%= @warroom_schedule.formatted_us_dial_in_numbers %>" name="us_dial_in_numbers" id="us_dial_in_numbers" class="input_mask mask_phone"></input>
+                </td>
+              </tr>
+              <tr id="tel" style="display: <%= @warroom_schedule.has_audio_conf? ? '' : 'none' %>">
+                <td align="right"><label style="font-size: 11px">Toll (other countries):</label></td>
+                <td colspan="2"><%= text_area_tag :audio_conference_number, @warroom_schedule.audio_conference_number, :size => "70x5" %></td>
+              </tr>
+            </table>            
+          </td>
+        </tr>
+        <tr>
+          <td align="right">
+            <label>Problem(s) to be addressed:</label><br/>
+            <a class="underline" href="#" onclick="show_select_problem_dialog();">Add/Remove</a>
+          </td>
+          <td>
+            <div id="selected_problem_table"></div>
+          </td>
+        </tr>
+      </table>
+      <div style="float:right; margin: 10px 0px 0px" class="blue-button">
+        <div class="blue-button-left"></div>
+        <div class="blue-button-body" onclick="submit_form();">Send Invitation(s)</div>
+        <div class="blue-button-right"></div>
+      </div>
+      <div class="clearfloat"></div>
+    <% end %>
+  </div>      
+</div>

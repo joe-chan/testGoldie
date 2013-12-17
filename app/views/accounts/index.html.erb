@@ -1,0 +1,97 @@
+<!-- css -->
+<link rel="stylesheet" type="text/css" href="/assets/yui-290/build/assets/skins/sam/skin.css"></link>
+<link rel="stylesheet" type="text/css" href="/assets/yui-290/build/datatable/assets/skins/sam/datatable.css"></link>
+<link rel="stylesheet" type="text/css" href="/assets/yui-290/build/paginator/assets/skins/sam/paginator.css"></link>
+<link rel="stylesheet" type="text/css" href="/assets/zuora_yui_override.css"></link>
+<!-- YUI js -->
+<script type="text/javascript" src="/assets/yui-290/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/element/element-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/datasource/datasource-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/datatable/datatable-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/container/container-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/paginator/paginator-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/connection/connection-min.js"></script>
+<script type="text/javascript" src="/assets/yui-290/build/json/json-min.js"></script>
+
+<script type="text/javascript">
+//
+// FUNCTION
+//
+var format_url = function(elCell, oRecord, oColumn, sData) {
+  var url = "/accounts" + "/" + oRecord.getData("objID") + "?tid=" + <%= @tenant_id %>;
+  elCell.innerHTML = "<a href='" + encodeURI(url) + "'>" + sData + "</a>";
+}
+
+function init() {
+  var col_defs = [
+      {key:"accountNumber", width: 60, sortable:true, resizeable:true, label:"Account No", formatter: format_url},
+      {key:"accountName", width: 180, sortable:true, resizeable:true, label:"Name"},
+      {key:"status", width: 30, sortable:true, resizeable:true, label:"Status"},
+      {key:"currency", width: 35, sortable:true, resizeable:true, label:"Currency"},
+      {key:"accountBalance", width: 40, sortable:true, resizeable:true, label:"Balance",
+        formatter:YAHOO.widget.DataTable.formatNumber, numberOptions: {decimalPlaces:2}},
+      {key:"paymentType", width: 65, sortable:true, resizeable:true, label:"Payment Type"},
+      {key:"cmrr", width: 40, sortable:true, resizeable:true, label:"CMRR",
+        formatter:YAHOO.widget.DataTable.formatNumber, numberOptions: {decimalPlaces:2}},
+      {key:"crmAccountID", width: 100, sortable:true, resizeable:true, label:"CRM ID"},
+      {key:"objID", hidden:true}
+  ];
+
+  account_data = new YAHOO.util.LocalDataSource(<%= @json_response.html_safe %>);
+  account_data.responseType = YAHOO.util.DataSource.TYPE_JSON;
+  account_data.responseSchema = {
+    resultsList: "response",
+    fields : [
+      { key: "accountNumber", parser: "string" },
+      { key: "accountName", parser: "string" },
+      { key: "status", parser: "string" },
+      { key: "currency", parser: "string" },
+      { key: "accountBalance", parser: "number" },
+      { key: "paymentType", parser: "string" },
+      { key: "cmrr", parser: "number" },
+      { key: "crmAccountID", parser: "string" },
+      { key: "accountNumber", parser: "string" },
+      { key: "objID", parser: "string"}
+    ]
+  }
+
+  var paginator = new YAHOO.widget.Paginator({
+      rowsPerPage: 25,
+      totalRecords: <%= @account_count %>,
+      template: "{PageLinks} Show {RowsPerPageDropdown} per page",
+      rowsPerPageOptions : [25,50,100,250],
+      containers : 'pagination'}
+  )
+
+  var config = {
+    dynamicData: false,
+    paginator: paginator,
+    MSG_EMPTY: "No Account Records found."
+  }
+
+  account_table = new YAHOO.widget.DataTable("account_table",
+                                              col_defs,
+                                              account_data,
+                                              config);
+} // end of init function
+YAHOO.util.Event.onDOMReady(init);
+</script>
+
+<div class="core-content-3">
+  <div class="wrap">
+    <%= form_tag '/accounts', { :name => 'form', :autocomplete => 'off' } do %>
+    <div class="page-title"><%= @account_table_head %></div>
+    <%= render :file => 'shared/common_flash' %>
+      <div style="margin-top: 10px" class="table-title">Choose an Account record</div>
+      <div style="float:right; margin-right: 10px; margin-bottom: 3px" id="pagination"></div>
+      <div class="clearfloat"></div>
+      <div style="margin:0 0 0" id="account_table"></div>
+      <div style="margin: 10px 0px 0px; float: right" onclick="location.href='/datasources?tid=<%= @tenant_id %>'" class="blue-button">
+        <div class="blue-button-left"></div>
+        <div class="blue-button-body">Back to Datasources</div>
+        <div class="blue-button-right"></div>
+      </div>
+      <div class="clearfloat"></div>
+    <% end %>
+  </div>
+</div>
